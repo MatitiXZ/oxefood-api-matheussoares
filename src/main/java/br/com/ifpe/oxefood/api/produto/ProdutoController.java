@@ -13,27 +13,36 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import br.com.ifpe.oxefood.modelo.produto.CategoriaProdutoService;
 import br.com.ifpe.oxefood.modelo.produto.Produto;
 import br.com.ifpe.oxefood.modelo.produto.ProdutoService;
 
 @RestController
-@RequestMapping("/api/produto")
+@RequestMapping("/api/Produto")
 @CrossOrigin
 public class ProdutoController {
 
-   @Autowired
-   private ProdutoService produtoService;
+    @Autowired
+    private ProdutoService produtoService;
 
-   @PostMapping
-   public ResponseEntity<Produto> save(@RequestBody ProdutoRequest request) {
+    @Autowired
+    private CategoriaProdutoService categoriaProdutoService;
 
-       Produto produto = produtoService.save(request.build());
-       return new ResponseEntity<Produto>(produto, HttpStatus.CREATED);
-   }
-   
-   @GetMapping
+    @PostMapping
+    public ResponseEntity<Produto> save(@RequestBody ProdutoRequest request) {
+
+        Produto produtoNovo = request.build();
+        produtoNovo.setCategoria(categoriaProdutoService.obterPorID(request.getIdCategoria()));
+
+        Produto produto = produtoService.save(produtoNovo);
+        return new ResponseEntity<Produto>(produto, HttpStatus.CREATED);
+    }
+
+    @GetMapping
     public List<Produto> listarTodos() {
         return produtoService.listarTodos();
     }
@@ -46,16 +55,35 @@ public class ProdutoController {
     @PutMapping("/{id}")
     public ResponseEntity<Produto> update(@PathVariable("id") Long id, @RequestBody ProdutoRequest request) {
 
-       produtoService.update(id, request.build());
-       return ResponseEntity.ok().build();
- }
+        Produto produtoAlterado = request.build();
+        produtoAlterado.setCategoria(categoriaProdutoService.obterPorID(request.getIdCategoria()));
+        produtoService.update(id, produtoAlterado);
 
- @DeleteMapping("/{id}")
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
 
-       produtoService.delete(id);
-       return ResponseEntity.ok().build();
-   }
+        produtoService.delete(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/filtrar")
+    public List<Produto> filtrar(
+            @RequestParam(value = "codigo", required = false) String codigo,
+            @RequestParam(value = "titulo", required = false) String titulo,
+            @RequestParam(value = "idCategoria", required = false) Long idCategoria) {
+
+        return produtoService.filtrar(codigo, titulo, idCategoria);
+    }
+
+    @PostMapping("/{id}")
+    public ResponseEntity<Produto> saveImage(@PathVariable Long id,
+            @RequestParam(value = "imagem", required = true) MultipartFile imagem) {
+
+        Produto produto = produtoService.saveImage(id, imagem);
+        return new ResponseEntity<Produto>(produto, HttpStatus.CREATED);
+    }
 
 }
-

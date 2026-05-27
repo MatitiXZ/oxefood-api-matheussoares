@@ -1,6 +1,8 @@
-package br.com.ifpe.oxefood.modelo.produto;
+package br.com.ifpe.oxefood.modelo.cliente;
 
 import org.hibernate.annotations.SQLRestriction;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import br.com.ifpe.oxefood.util.entity.EntidadeAuditavel;
 import jakarta.persistence.Column;
@@ -14,38 +16,38 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "Produto")
+@Table(name = "EnderecoCliente")
 @SQLRestriction("habilitado = true")
 @Builder
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+public class EnderecoCliente extends EntidadeAuditavel {
 
-public class Produto extends EntidadeAuditavel {
+   @JsonIgnore
+   @ManyToOne
+   private Cliente cliente;
 
-    @ManyToOne
-    private CategoriaProduto categoria;
+   @Column
+   private String rua;
 
-    @Column
-    private String codigo;
+   @Column
+   private String numero;
 
-    @Column
-    private String titulo;
+   @Column
+   private String bairro;
 
-    @Column
-    private String descricao;
+   @Column
+   private String cep;
 
-    @Column
-    private Double valorUnitario;
+   @Column
+   private String cidade;
 
-    @Column
-    private Integer tempoEntregaMinimo;
+   @Column
+   private String estado;
 
-    @Column
-    private Integer tempoEntregaMaximo;
-
-    @Column
-    private String imagem;
-
+   @Column
+   private String complemento;
+  
 }

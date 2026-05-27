@@ -39,6 +39,8 @@ public class AuthenticationController {
         loginResponse.put("username", authenticatedUser.getUsername());
         loginResponse.put("token", jwtToken);
         loginResponse.put("tokenExpiresIn", jwtService.getExpirationTime());
+        // ADICIONE ESTA LINHA (ajuste o .getRole() para o método correto da sua classe Usuario)
+        //loginResponse.put("tipo", authenticatedUser.getAuthorities());
 
         return loginResponse;
     }    

@@ -4,24 +4,31 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import br.com.ifpe.oxefood.util.Util;
+import br.com.ifpe.oxefood.util.exception.ProdutoException;
 import jakarta.transaction.Transactional;
 
 @Service
 public class ProdutoService {
 
-   @Autowired
-   private ProdutoRepository repository;
+    @Autowired
+    private ProdutoRepository repository;
 
-   @Transactional
-   public Produto save(Produto produto) {
+    @Transactional
+    public Produto save(Produto produto) {
 
-       produto.setHabilitado(Boolean.TRUE);
-       return repository.save(produto);
-   }
+        if (produto.getValorUnitario() < 10) {
+            throw new ProdutoException(ProdutoException.MSG_VALOR_MINIMO_PRODUTO);
+        }
 
-   public List<Produto> listarTodos() {
-  
+        produto.setHabilitado(Boolean.TRUE);
+        return repository.save(produto);
+    }
+
+    public List<Produto> listarTodos() {
+
         return repository.findAll();
     }
 
@@ -33,24 +40,71 @@ public class ProdutoService {
     @Transactional
     public void update(Long id, Produto produtoAlterado) {
 
-      Produto produto = repository.findById(id).get();
-      produto.setCodigo(produtoAlterado.getCodigo());
-      produto.setTitulo(produtoAlterado.getTitulo());
-      produto.setDescricao(produtoAlterado.getDescricao());
-      produto.setValorUnitario(produtoAlterado.getValorUnitario());
-      produto.setTempoEntregaMinimo(produtoAlterado.getTempoEntregaMinimo());
-      produto.setTempoEntregaMaximo(produtoAlterado.getTempoEntregaMaximo());
-	    
-      repository.save(produto);
-  }
+        Produto produto = repository.findById(id).get();
+        produto.setCategoria(produtoAlterado.getCategoria());
+        produto.setCodigo(produtoAlterado.getCodigo());
+        produto.setTitulo(produtoAlterado.getTitulo());
+        produto.setDescricao(produtoAlterado.getDescricao());
+        produto.setValorUnitario(produtoAlterado.getValorUnitario());
+        produto.setTempoEntregaMinimo(produtoAlterado.getTempoEntregaMinimo());
+        produto.setTempoEntregaMaximo(produtoAlterado.getTempoEntregaMaximo());
 
-  @Transactional
+        repository.save(produto);
+    }
+
+    @Transactional
     public void delete(Long id) {
 
-       Produto produto = repository.findById(id).get();
-       produto.setHabilitado(Boolean.FALSE);
+        Produto produto = repository.findById(id).get();
+        produto.setHabilitado(Boolean.FALSE);
 
-       repository.save(produto);
-   }
+        repository.save(produto);
+    }
+
+    public List<Produto> filtrar(String codigo, String titulo, Long idCategoria) {
+
+        List<Produto> listaProdutos = repository.findAll();
+
+        if ((codigo != null && !"".equals(codigo)) &&
+                (titulo == null || "".equals(titulo)) &&
+                (idCategoria == null)) {
+
+            listaProdutos = repository.consultarPorCodigo(codigo);
+
+        } else if ((codigo == null || "".equals(codigo)) &&
+                (titulo != null && !"".equals(titulo)) &&
+                (idCategoria == null)) {
+
+            listaProdutos = repository.findByTituloContainingIgnoreCaseOrderByTituloAsc(titulo);
+
+        } else if ((codigo == null || "".equals(codigo)) &&
+                (titulo == null || "".equals(titulo)) &&
+                (idCategoria != null)) {
+
+            listaProdutos = repository.consultarPorCategoria(idCategoria);
+
+        } else if ((codigo == null || "".equals(codigo)) &&
+                (titulo != null && !"".equals(titulo)) &&
+                (idCategoria != null)) {
+
+            listaProdutos = repository.consultarPorTituloECategoria(titulo, idCategoria);
+        }
+
+        return listaProdutos;
+    }
+
+    @Transactional
+    public Produto saveImage(Long id, MultipartFile imagem) {
+
+        Produto produto = obterPorID(id);
+
+        String imagemUpada = Util.fazerUploadImagem(imagem);
+
+        if (imagemUpada != null) {
+            produto.setImagem(imagemUpada);
+        }
+
+        return save(produto);
+    }
 
 }
